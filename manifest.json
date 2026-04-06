@@ -1,0 +1,10 @@
+{
+	"id": "pocket-dictations",
+	"name": "Pocket Dictations",
+	"version": "1.0.4",
+	"minAppVersion": "0.15.0",
+	"description": "Sync your Pocket AI device dictations into Obsidian notes.",
+	"author": "jlay8",
+	"authorUrl": "https://heypocketai.com",
+	"isDesktopOnly": false
+}
