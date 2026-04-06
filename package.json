@@ -1,7 +1,7 @@
 {
 	"name": "pocket-dictations",
 	"version": "1.0.0",
-	"description": "Sync your Pocket AI device dictations into Obsidian notes.",
+	"description": "Sync your Pocket AI device dictations into notes.",
 	"main": "main.js",
 	"type": "module",
 	"scripts": {
