@@ -158,9 +158,7 @@ function buildNoteContent(recording: PocketRecording, date: string): string {
 		?? firstSummarization?.v2?.summary?.markdown
 		?? firstSummarization?.v2?.summary?.summary;
 
-	const actionItemsList = Array.isArray(firstSummarization?.v2?.actionItems?.actions)
-		? firstSummarization!.v2!.actionItems!.actions!
-		: [];
+	const actionItemsList = firstSummarization?.v2?.actionItems?.actions ?? [];
 
 	const summarySection = [
 		'## Summary',

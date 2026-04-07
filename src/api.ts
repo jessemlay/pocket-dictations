@@ -1,3 +1,5 @@
+import { requestUrl } from 'obsidian';
+
 const BASE_URL = 'https://public.heypocketai.com/api/v1';
 
 export interface PocketTag {
@@ -103,28 +105,29 @@ export class PocketApiClient {
 	async listRecordings(): Promise<PocketRecording[]> {
 		const recordings: PocketRecording[] = [];
 		let page = 1;
+		let hasMore = true;
 
-		do {
+		while (hasMore) {
 			const url = new URL(`${BASE_URL}/public/recordings`);
 			url.searchParams.set('page', String(page));
 
-			const response = await fetch(url.toString(), { headers: this.headers });
-
-			if (response.status === 401) {
-				throw new Error('Invalid Pocket API key. Please check your settings.');
+			let response;
+			try {
+				response = await requestUrl({ url: url.toString(), headers: this.headers });
+			} catch (err) {
+				const status = (err as { status?: number }).status;
+				if (status === 401) throw new Error('Invalid Pocket API key. Please check your settings.');
+				throw new Error(`Pocket API error: ${status ?? 'unknown'}`);
 			}
-			if (!response.ok) {
-				throw new Error(`Pocket API error: ${response.status} ${response.statusText}`);
-			}
 
-			const body = (await response.json()) as ListRecordingsResponse;
+			const body: ListRecordingsResponse = response.json;
 			if (Array.isArray(body.data)) {
 				recordings.push(...body.data);
 			}
 
-			if (!body.pagination?.has_more) break;
+			hasMore = body.pagination?.has_more ?? false;
 			page++;
-		} while (true);
+		}
 
 		return recordings;
 	}
@@ -134,16 +137,16 @@ export class PocketApiClient {
 		url.searchParams.set('include_transcript', 'true');
 		url.searchParams.set('include_summarizations', 'true');
 
-		const response = await fetch(url.toString(), { headers: this.headers });
-
-		if (response.status === 401) {
-			throw new Error('Invalid Pocket API key. Please check your settings.');
+		let response;
+		try {
+			response = await requestUrl({ url: url.toString(), headers: this.headers });
+		} catch (err) {
+			const status = (err as { status?: number }).status;
+			if (status === 401) throw new Error('Invalid Pocket API key. Please check your settings.');
+			throw new Error(`Pocket API error: ${status ?? 'unknown'}`);
 		}
-		if (!response.ok) {
-			throw new Error(`Pocket API error: ${response.status} ${response.statusText}`);
-		}
 
-		const body = (await response.json()) as GetRecordingResponse;
+		const body: GetRecordingResponse = response.json;
 		return body.data;
 	}
 }

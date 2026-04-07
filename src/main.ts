@@ -1,6 +1,8 @@
-import { Notice, Plugin } from 'obsidian';
+import { App, Notice, Plugin } from 'obsidian';
 import { DEFAULT_SETTINGS, PocketSettingTab, PocketSettings } from './settings';
 import { SyncEngine } from './sync';
+
+type AppWithSetting = App & { setting: { openTabById: (id: string) => void } };
 
 export default class PocketPlugin extends Plugin {
 	settings: PocketSettings;
@@ -11,15 +13,15 @@ export default class PocketPlugin extends Plugin {
 		await this.loadSettings();
 		this.syncEngine = new SyncEngine(this.app);
 
-		this.addRibbonIcon('microphone', 'Sync Pocket Dictations', async () => {
-			await this.syncNow();
+		this.addRibbonIcon('microphone', 'Sync recordings', () => {
+			void this.syncNow();
 		});
 
 		this.addCommand({
-			id: 'sync-pocket-dictations',
-			name: 'Sync Pocket Dictations',
-			callback: async () => {
-				await this.syncNow();
+			id: 'sync',
+			name: 'Sync recordings',
+			callback: () => {
+				void this.syncNow();
 			},
 		});
 
@@ -28,13 +30,12 @@ export default class PocketPlugin extends Plugin {
 		// Prompt first-time setup if no API key is configured
 		if (!this.settings.apiKey) {
 			const notice = new Notice(
-				'Pocket Dictations: No API key configured. Click here to open settings.',
+				'No API key configured. Click here to open settings.',
 				10000
 			);
-			notice.noticeEl.style.cursor = 'pointer';
-			notice.noticeEl.addEventListener('click', () => {
-				// @ts-ignore – open the settings tab for this plugin
-				(this.app as any).setting.openTabById(this.manifest.id);
+			notice.messageEl.addClass('pocket-notice-clickable');
+			notice.messageEl.addEventListener('click', () => {
+				(this.app as AppWithSetting).setting.openTabById(this.manifest.id);
 				notice.hide();
 			});
 		}
@@ -47,7 +48,7 @@ export default class PocketPlugin extends Plugin {
 	}
 
 	async loadSettings() {
-		this.settings = Object.assign({}, DEFAULT_SETTINGS, (await this.loadData()) as Partial<PocketSettings>);
+		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData() as Partial<PocketSettings>);
 	}
 
 	async saveSettings() {
@@ -55,12 +56,12 @@ export default class PocketPlugin extends Plugin {
 	}
 
 	async syncNow(): Promise<void> {
-		new Notice('Pocket Dictations: Syncing…');
+		new Notice('Syncing…');
 		const { imported, skipped } = await this.syncEngine.run(this.settings, () => this.saveSettings());
 		if (imported > 0) {
-			new Notice(`Pocket Dictations: Imported ${imported} new recording${imported !== 1 ? 's' : ''}. (${skipped} already up to date)`);
+			new Notice(`Imported ${imported} new recording${imported !== 1 ? 's' : ''}. (${skipped} already up to date)`);
 		} else {
-			new Notice('Pocket Dictations: Already up to date.');
+			new Notice('Already up to date.');
 		}
 	}
 
@@ -70,8 +71,8 @@ export default class PocketPlugin extends Plugin {
 		if (intervalMs <= 0) return;
 
 		this.autoSyncIntervalId = this.registerInterval(
-			window.setInterval(async () => {
-				await this.syncEngine.run(this.settings, () => this.saveSettings());
+			window.setInterval(() => {
+				void this.syncEngine.run(this.settings, () => this.saveSettings());
 			}, intervalMs)
 		);
 	}

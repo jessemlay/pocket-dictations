@@ -30,7 +30,7 @@ export class PocketSettingTab extends PluginSettingTab {
 		const { containerEl } = this;
 		containerEl.empty();
 
-		containerEl.createEl('h2', { text: 'Pocket Dictations' });
+		new Setting(containerEl).setName('Pocket Dictations').setHeading();
 
 		// ── API Key ──────────────────────────────────────────────────────────
 		const apiKeyDesc = document.createDocumentFragment();
@@ -46,7 +46,7 @@ export class PocketSettingTab extends PluginSettingTab {
 
 		let apiKeyInput: HTMLInputElement;
 		const apiKeySetting = new Setting(containerEl)
-			.setName('API Key')
+			.setName('API key')
 			.setDesc(apiKeyDesc)
 			.addText(text => {
 				apiKeyInput = text.inputEl;
@@ -55,9 +55,9 @@ export class PocketSettingTab extends PluginSettingTab {
 				text
 					.setPlaceholder('pk_...')
 					.setValue(this.plugin.settings.apiKey)
-					.onChange(async value => {
+					.onChange(value => {
 						this.plugin.settings.apiKey = value.trim();
-						await this.plugin.saveSettings();
+						void this.plugin.saveSettings();
 					});
 			})
 			.addExtraButton(btn =>
@@ -78,9 +78,9 @@ export class PocketSettingTab extends PluginSettingTab {
 		// Test Connection button
 		apiKeySetting.addButton(btn =>
 			btn
-				.setButtonText('Test Connection')
+				.setButtonText('Test connection')
 				.setCta()
-				.onClick(async () => {
+				.onClick(() => {
 					const key = this.plugin.settings.apiKey;
 					if (!key) {
 						new Notice('Enter your API key first.');
@@ -88,52 +88,53 @@ export class PocketSettingTab extends PluginSettingTab {
 					}
 					btn.setButtonText('Testing…');
 					btn.setDisabled(true);
-					try {
-						const client = new PocketApiClient(key);
-						await client.listRecordings();
-						new Notice('✅ Pocket API key is valid!');
-					} catch (err) {
-						const msg = err instanceof Error ? err.message : String(err);
-						new Notice(`❌ ${msg}`);
-					} finally {
-						btn.setButtonText('Test Connection');
-						btn.setDisabled(false);
-					}
+					void new PocketApiClient(key).listRecordings()
+						.then(() => {
+							new Notice('✅ Pocket API key is valid!');
+						})
+						.catch((err: unknown) => {
+							const msg = err instanceof Error ? err.message : String(err);
+							new Notice(`❌ ${msg}`);
+						})
+						.finally(() => {
+							btn.setButtonText('Test connection');
+							btn.setDisabled(false);
+						});
 				})
 		);
 
 		// ── Import Folder ────────────────────────────────────────────────────
 		new Setting(containerEl)
-			.setName('Import Folder')
+			.setName('Import folder')
 			.setDesc('Vault folder where Pocket dictation notes will be saved.')
 			.addText(text =>
 				text
 					.setPlaceholder('Pocket Dictations')
 					.setValue(this.plugin.settings.importFolder)
-					.onChange(async value => {
+					.onChange(value => {
 						this.plugin.settings.importFolder = value.trim() || 'Pocket Dictations';
-						await this.plugin.saveSettings();
+						void this.plugin.saveSettings();
 					})
 			);
 
 		// ── Auto-Sync Interval ───────────────────────────────────────────────
 		new Setting(containerEl)
-			.setName('Auto-Sync Interval (minutes)')
+			.setName('Auto-sync interval (minutes)')
 			.setDesc('How often to automatically sync in the background. Set to 0 to disable auto-sync.')
 			.addText(text =>
 				text
 					.setPlaceholder('30')
 					.setValue(String(this.plugin.settings.syncIntervalMinutes))
-					.onChange(async value => {
+					.onChange(value => {
 						const parsed = parseInt(value, 10);
 						this.plugin.settings.syncIntervalMinutes = isNaN(parsed) || parsed < 0 ? 0 : parsed;
-						await this.plugin.saveSettings();
+						void this.plugin.saveSettings();
 						this.plugin.restartAutoSync();
 					})
 			);
 
 		// ── Sync Status ──────────────────────────────────────────────────────
-		const statusSetting = new Setting(containerEl).setName('Sync Status');
+		const statusSetting = new Setting(containerEl).setName('Sync status');
 
 		if (this.plugin.settings.lastSyncTime) {
 			statusSetting.setDesc(
@@ -145,15 +146,15 @@ export class PocketSettingTab extends PluginSettingTab {
 
 		statusSetting.addButton(btn =>
 			btn
-				.setButtonText('Sync Now')
-				.onClick(async () => {
+				.setButtonText('Sync now')
+				.onClick(() => {
 					btn.setButtonText('Syncing…');
 					btn.setDisabled(true);
-					await this.plugin.syncNow();
-					btn.setButtonText('Sync Now');
-					btn.setDisabled(false);
-					// Refresh the status description
-					this.display();
+					void this.plugin.syncNow().finally(() => {
+						btn.setButtonText('Sync now');
+						btn.setDisabled(false);
+						this.display();
+					});
 				})
 		);
 	}
