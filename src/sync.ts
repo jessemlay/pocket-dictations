@@ -15,7 +15,7 @@ export class SyncEngine {
 		saveSettings: () => Promise<void>
 	): Promise<{ imported: number; skipped: number }> {
 		if (!settings.apiKey) {
-			new Notice('Pocket Dictations: No API key set. Please configure it in settings.');
+			new Notice('No API key set. Please configure it in settings.');
 			return { imported: 0, skipped: 0 };
 		}
 

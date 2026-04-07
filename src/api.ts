@@ -120,7 +120,7 @@ export class PocketApiClient {
 				throw new Error(`Pocket API error: ${status ?? 'unknown'}`);
 			}
 
-			const body: ListRecordingsResponse = response.json;
+			const body = response.json as unknown as ListRecordingsResponse;
 			if (Array.isArray(body.data)) {
 				recordings.push(...body.data);
 			}
@@ -146,7 +146,7 @@ export class PocketApiClient {
 			throw new Error(`Pocket API error: ${status ?? 'unknown'}`);
 		}
 
-		const body: GetRecordingResponse = response.json;
+		const body = response.json as unknown as GetRecordingResponse;
 		return body.data;
 	}
 }

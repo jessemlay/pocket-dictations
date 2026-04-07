@@ -30,18 +30,18 @@ export class PocketSettingTab extends PluginSettingTab {
 		const { containerEl } = this;
 		containerEl.empty();
 
-		new Setting(containerEl).setName('Pocket Dictations').setHeading();
-
 		// ── API Key ──────────────────────────────────────────────────────────
 		const apiKeyDesc = document.createDocumentFragment();
+		const strong = document.createElement('strong');
+		strong.textContent = 'Settings → integrations';
+		const link = document.createElement('a');
+		link.textContent = 'View API docs ↗';
+		link.href = 'https://docs.heypocketai.com/docs/api';
 		apiKeyDesc.append(
 			'Your Pocket AI API key (starts with pk_). Find it in the Pocket app under ',
-			createEl('strong', { text: 'Settings → Integrations' }),
+			strong,
 			'. ',
-			createEl('a', {
-				text: 'View API docs ↗',
-				href: 'https://docs.heypocketai.com/docs/api',
-			})
+			link
 		);
 
 		let apiKeyInput: HTMLInputElement;
@@ -53,7 +53,7 @@ export class PocketSettingTab extends PluginSettingTab {
 				apiKeyInput.type = 'password';
 				apiKeyInput.autocomplete = 'off';
 				text
-					.setPlaceholder('pk_...')
+					.setPlaceholder('Your API key')
 					.setValue(this.plugin.settings.apiKey)
 					.onChange(value => {
 						this.plugin.settings.apiKey = value.trim();
@@ -75,7 +75,7 @@ export class PocketSettingTab extends PluginSettingTab {
 					})
 			);
 
-		// Test Connection button
+		// Test connection button
 		apiKeySetting.addButton(btn =>
 			btn
 				.setButtonText('Test connection')
@@ -90,11 +90,11 @@ export class PocketSettingTab extends PluginSettingTab {
 					btn.setDisabled(true);
 					void new PocketApiClient(key).listRecordings()
 						.then(() => {
-							new Notice('✅ Pocket API key is valid!');
+							new Notice('API key is valid!');
 						})
 						.catch((err: unknown) => {
 							const msg = err instanceof Error ? err.message : String(err);
-							new Notice(`❌ ${msg}`);
+							new Notice(msg);
 						})
 						.finally(() => {
 							btn.setButtonText('Test connection');
@@ -103,13 +103,13 @@ export class PocketSettingTab extends PluginSettingTab {
 				})
 		);
 
-		// ── Import Folder ────────────────────────────────────────────────────
+		// ── Import folder ────────────────────────────────────────────────────
 		new Setting(containerEl)
 			.setName('Import folder')
-			.setDesc('Vault folder where Pocket dictation notes will be saved.')
+			.setDesc('Vault folder where pocket dictation notes will be saved.')
 			.addText(text =>
 				text
-					.setPlaceholder('Pocket Dictations')
+					.setPlaceholder('Pocket dictations')
 					.setValue(this.plugin.settings.importFolder)
 					.onChange(value => {
 						this.plugin.settings.importFolder = value.trim() || 'Pocket Dictations';
@@ -117,7 +117,7 @@ export class PocketSettingTab extends PluginSettingTab {
 					})
 			);
 
-		// ── Auto-Sync Interval ───────────────────────────────────────────────
+		// ── Auto-sync interval ───────────────────────────────────────────────
 		new Setting(containerEl)
 			.setName('Auto-sync interval (minutes)')
 			.setDesc('How often to automatically sync in the background. Set to 0 to disable auto-sync.')
@@ -133,7 +133,7 @@ export class PocketSettingTab extends PluginSettingTab {
 					})
 			);
 
-		// ── Sync Status ──────────────────────────────────────────────────────
+		// ── Sync status ──────────────────────────────────────────────────────
 		const statusSetting = new Setting(containerEl).setName('Sync status');
 
 		if (this.plugin.settings.lastSyncTime) {
